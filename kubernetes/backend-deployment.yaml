@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: code-quality-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: API_PORT
+              value: "5000"
+            - name: SONARQUBE_URL
+              value: "http://sonarqube:9000"
+            - name: SONARQUBE_TOKEN
+              value: ""
+            - name: GITHUB_TOKEN
+              value: ""
+            - name: GITHUB_REPO
+              value: ""
