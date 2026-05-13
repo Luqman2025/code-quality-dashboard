@@ -56,6 +56,8 @@ Services:
 - SonarQube: http://localhost:9000
 - Backend API: http://localhost:5001
 - Frontend UI: http://localhost:3000
+- Grafana: http://localhost:3001 (admin/admin123)
+- Prometheus: http://localhost:9090
 
 ## Local Development (Optional)
 
@@ -77,6 +79,37 @@ npm run dev
 
 - `GET /api/sonar/dashboard`
 - `GET /api/developers/scores`
+- `GET /api/projects`
+
+## Token-Based Sign-In (Local)
+
+Open the **Connections** page in the UI to paste your SonarQube URL/token and GitHub token/repo.
+These values are stored in your browser `localStorage` and sent to the backend with each request.
+If values are missing or invalid, the backend falls back to mock data.
+
+## Grafana (Optional)
+
+Grafana runs on http://localhost:3001 with the demo TestData datasource.
+Login with `admin` and the password in `GRAFANA_ADMIN_PASSWORD`.
+Replace the datasource with Prometheus, Loki, or a JSON API plugin if you want real metrics.
+
+## Prometheus + Grafana (Real Metrics)
+
+This stack scrapes the backend `/metrics` endpoint and visualizes it in Grafana.
+
+Run:
+```
+docker-compose up --build
+```
+
+Verify metrics:
+```
+curl http://localhost:5001/metrics
+```
+
+Open Grafana and check dashboards:
+- Grafana: http://localhost:3001
+- Dashboard: "Backend Metrics (Prometheus)"
 
 ## Kubernetes (Basic Demo)
 
@@ -111,6 +144,22 @@ Update the frontend API base URL to use the ngrok URL:
 4. Deploy.
 
 The frontend will call the ngrok-exposed backend running on your machine.
+
+## Automated Tests
+
+Backend unit + API tests:
+```
+cd backend
+npm install
+npm test
+```
+
+Frontend component tests:
+```
+cd frontend
+npm install
+npm test
+```
 
 ## Mock Data Support
 

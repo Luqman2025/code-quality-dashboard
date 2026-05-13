@@ -2,9 +2,9 @@ const axios = require("axios");
 const { getMockDevelopers } = require("./mockData");
 const { logger } = require("../utils/logger");
 
-const getContributors = async () => {
-  const token = process.env.GITHUB_TOKEN;
-  const repo = process.env.GITHUB_REPO;
+const getContributors = async (overrides = {}) => {
+  const token = overrides.githubToken || process.env.GITHUB_TOKEN;
+  const repo = overrides.githubRepo || process.env.GITHUB_REPO;
 
   if (!token || !repo) {
     return getMockDevelopers().map((dev) => ({

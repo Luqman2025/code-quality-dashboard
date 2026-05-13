@@ -1,5 +1,7 @@
 const { getContributors } = require("./githubService");
 const { getMockDevelopers } = require("./mockData");
+const { getAuthorIssueCounts, getAverageCoverage, getProjectKeys } = require("./sonarService");
+const { logger } = require("../utils/logger");
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -18,27 +20,48 @@ const calculateScore = (developer) => {
   return clamp(Math.round(score), 0, 100);
 };
 
-const getDeveloperScores = async () => {
-  const contributors = await getContributors();
+const getDeveloperScores = async (overrides = {}) => {
+  const contributors = await getContributors(overrides);
   const mockDevelopers = getMockDevelopers();
 
-  const merged = contributors.map((contributor) => {
-    const mock = mockDevelopers.find((item) => item.name === contributor.login) || {
-      bugs: 2,
-      codeSmells: 10,
-      coverageImpact: 0
-    };
+  let projectKeys = [];
+  let averageCoverage = 0;
 
-    const coverage = clamp(80 + mock.coverageImpact, 0, 100);
+  try {
+    projectKeys = await getProjectKeys(overrides);
+    averageCoverage = await getAverageCoverage(overrides);
+  } catch (error) {
+    logger.warn("Falling back to mock coverage", error.message);
+  }
 
-    return {
-      name: contributor.login,
-      commits: contributor.commits,
-      bugs: mock.bugs,
-      codeSmells: mock.codeSmells,
-      coverage
-    };
-  });
+  const merged = await Promise.all(
+    contributors.map(async (contributor) => {
+      const mock = mockDevelopers.find((item) => item.name === contributor.login) || {
+        bugs: 2,
+        codeSmells: 10,
+        coverageImpact: 0
+      };
+
+      let issues = null;
+      try {
+        issues = await getAuthorIssueCounts(overrides, contributor.login, projectKeys);
+      } catch (error) {
+        logger.warn("Falling back to mock issue counts", error.message);
+      }
+
+      const coverage = averageCoverage
+        ? clamp(averageCoverage, 0, 100)
+        : clamp(80 + mock.coverageImpact, 0, 100);
+
+      return {
+        name: contributor.login,
+        commits: contributor.commits,
+        bugs: issues?.bugs ?? mock.bugs,
+        codeSmells: issues?.codeSmells ?? mock.codeSmells,
+        coverage
+      };
+    })
+  );
 
   const withScores = merged.map((developer) => {
     const score = calculateScore(developer);

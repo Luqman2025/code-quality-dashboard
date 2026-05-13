@@ -4,9 +4,9 @@ const { logger } = require("../utils/logger");
 
 const metricsList = ["bugs", "vulnerabilities", "code_smells", "coverage"];
 
-const getClient = () => {
-  const baseURL = process.env.SONARQUBE_URL;
-  const token = process.env.SONARQUBE_TOKEN;
+const getClient = (overrides = {}) => {
+  const baseURL = overrides.sonarUrl || process.env.SONARQUBE_URL;
+  const token = overrides.sonarToken || process.env.SONARQUBE_TOKEN;
 
   if (!baseURL || !token) {
     return null;
@@ -50,6 +50,29 @@ const fetchProjectMetrics = async (client, projectKey) => {
   };
 };
 
+const fetchAuthorIssueCounts = async (client, author, componentKeys = []) => {
+  const response = await client.get("/api/issues/search", {
+    params: {
+      author,
+      resolved: "false",
+      facets: "types",
+      ps: 1,
+      ...(componentKeys.length ? { componentKeys: componentKeys.join(",") } : {})
+    }
+  });
+
+  const facets = response.data.facets || [];
+  const typesFacet = facets.find((facet) => facet.property === "types");
+  const values = typesFacet?.values || [];
+  const getCount = (type) => values.find((item) => item.val === type)?.count || 0;
+
+  return {
+    bugs: getCount("BUG"),
+    vulnerabilities: getCount("VULNERABILITY"),
+    codeSmells: getCount("CODE_SMELL")
+  };
+};
+
 const buildTrend = (projects) => {
   const base = projects.reduce(
     (acc, project) => {
@@ -77,8 +100,8 @@ const buildTrend = (projects) => {
   });
 };
 
-const getDashboardMetrics = async () => {
-  const client = getClient();
+const getDashboardMetrics = async (overrides = {}) => {
+  const client = getClient(overrides);
 
   if (!client) {
     return getMockDashboard();
@@ -133,4 +156,35 @@ const getDashboardMetrics = async () => {
   }
 };
 
-module.exports = { getDashboardMetrics };
+const getProjectKeys = async (overrides = {}) => {
+  const client = getClient(overrides);
+
+  if (!client) {
+    return [];
+  }
+
+  const projects = await fetchProjects(client);
+  return projects.map((project) => project.key);
+};
+
+const getAuthorIssueCounts = async (overrides = {}, author, componentKeys = []) => {
+  const client = getClient(overrides);
+
+  if (!client || !author) {
+    return null;
+  }
+
+  return fetchAuthorIssueCounts(client, author, componentKeys);
+};
+
+const getAverageCoverage = async (overrides = {}) => {
+  const metrics = await getDashboardMetrics(overrides);
+  return metrics?.totals?.averageCoverage ?? 0;
+};
+
+module.exports = {
+  getDashboardMetrics,
+  getProjectKeys,
+  getAuthorIssueCounts,
+  getAverageCoverage
+};

@@ -1,0 +1,48 @@
+{
+  "id": null,
+  "uid": "backend-metrics",
+  "title": "Backend Metrics (Prometheus)",
+  "tags": ["prometheus", "backend"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests (per minute)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(http_requests_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Process CPU Seconds",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "B",
+          "expr": "process_cpu_seconds_total"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Heap Used (bytes)",
+      "gridPos": { "x": 12, "y": 4, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "refId": "C",
+          "expr": "process_resident_memory_bytes"
+        }
+      ]
+    }
+  ]
+}

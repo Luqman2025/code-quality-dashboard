@@ -1,6 +1,8 @@
 import { NavLink, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
 import Developers from "./pages/Developers.jsx";
+import Settings from "./pages/Settings.jsx";
+import Monitoring from "./pages/Monitoring.jsx";
 
 const App = () => {
   return (
@@ -20,7 +22,9 @@ const App = () => {
               <nav className="flex items-center gap-4">
                 {[
                   { to: "/", label: "Dashboard" },
-                  { to: "/developers", label: "Developers" }
+                  { to: "/developers", label: "Developers" },
+                  { to: "/monitoring", label: "Monitoring" },
+                  { to: "/settings", label: "Connections" }
                 ].map((item) => (
                   <NavLink
                     key={item.to}
@@ -44,6 +48,8 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/developers" element={<Developers />} />
+              <Route path="/monitoring" element={<Monitoring />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
         </div>
